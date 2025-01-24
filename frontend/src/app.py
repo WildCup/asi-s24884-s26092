@@ -1,6 +1,7 @@
 import streamlit as st
 import requests
 import base64
+import pandas as pd
 
 # Backend URL (adjust the URL accordingly)
 API_URL = "http://127.0.0.1:8000/trade"
@@ -31,7 +32,7 @@ initial_balance = st.number_input(
 
 # Slider for number of days
 days = st.slider(
-    "Select number of days for simulation:", min_value=1, max_value=365, value=30
+    "Select number of days for simulation:", min_value=1, max_value=365, value=31
 )
 
 # Example stock tickers as plain text
@@ -69,3 +70,25 @@ if st.button("Run Trade Simulation"):
                 st.error(f"Error displaying image: {str(e)}")
         else:
             st.error("No plot data found.")
+
+        # Display the trade log
+        trade_log = trade_data.get("trade_log")
+        # Your trade log logic inside Streamlit
+        if trade_data:
+            # Example trade log data (append format)
+            log_data = []
+            for trade in trade_data['trade_log']:
+                action = trade['action']
+                date = trade['date']
+                price = trade['price']  # This should be numeric, but it might come as a string
+                shares = trade['shares']
+                
+                # Convert price to float if necessary and format it correctly
+                log_data.append([action, date, f"${float(price):.2f}", shares])
+
+            # Convert the log data into a DataFrame for better handling and to add column names
+            log_df = pd.DataFrame(log_data, columns=["Action", "Date", "Price", "Shares"])
+
+            # Display the log with proper column names
+            st.write("Trade Log:")
+            st.table(log_df)  # Display the DataFrame as a table
