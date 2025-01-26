@@ -1,7 +1,7 @@
 from fastapi import FastAPI
-from models.models import TradeRequest, TradeResponse
-from ml.model import fetch_stock_data, train_model
-from utils import create_plot
+from src.models.models import TradeRequest, TradeResponse
+from src.ml.model import fetch_stock_data, train_model
+from src.utils import create_plot
 
 import pandas as pd
 
@@ -62,7 +62,7 @@ def simulate_trading(ticker, initial_balance, days=30):
                 balance += position * current_price
                 trade_log.append({
                     "action": "Sell",
-                    "date": str(X_test.index[-(i + 1)]), 
+                    "date": str(X_test.index[-(i + 1)]),
                     "price": f"{current_price:.2f}",
                     "shares": str(position)
                 })
@@ -85,7 +85,7 @@ def simulate_trading(ticker, initial_balance, days=30):
 @app.post("/trade", response_model=TradeResponse)
 async def trade(request: TradeRequest):
     """
-    Simulates a trading strategy using a linear regression model based on the given stock ticker, initial balance, 
+    Simulates a trading strategy using a linear regression model based on the given stock ticker, initial balance,
     and the number of days. It returns the final balance, profit, plot of actual vs predicted prices, and a detailed
     trade log of buy and sell actions.
 

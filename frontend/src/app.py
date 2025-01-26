@@ -4,7 +4,7 @@ import base64
 import pandas as pd
 
 # Backend URL (adjust the URL accordingly)
-API_URL = "http://127.0.0.1:8000/trade"
+API_URL = "http://backend:8000/trade"
 
 
 def fetch_trade_data(ticker, initial_balance, days):
@@ -82,7 +82,7 @@ if st.button("Run Trade Simulation"):
                 date = trade['date']
                 price = trade['price']  # This should be numeric, but it might come as a string
                 shares = trade['shares']
-                
+
                 # Convert price to float if necessary and format it correctly
                 log_data.append([action, date, f"${float(price):.2f}", shares])
 
