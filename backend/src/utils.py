@@ -1,6 +1,7 @@
 import base64
 import matplotlib.pyplot as plt
 from io import BytesIO
+import yfinance as yf
 
 def create_plot(data, days):
     """
@@ -35,3 +36,29 @@ def create_plot(data, days):
     plot_base64 = base64.b64encode(buffer.getvalue()).decode("utf-8")
     buffer.close()
     return f"data:image/png;base64,{plot_base64}"
+
+
+def validate_ticker(ticker):
+    """
+    Validates whether the given ticker symbol exists on Yahoo Finance.
+
+    Args:
+        ticker (str): Stock ticker symbol (e.g., "AAPL").
+
+    Returns:
+        bool: True if the ticker exists and data is fetched, False otherwise.
+    """
+    try:
+        # Try to fetch data for the ticker
+        stock_data = yf.Ticker(ticker)
+        # Check if the stock has any historical data
+        if stock_data.history(period="1d").empty:
+            print(f"Ticker {ticker} does not have any available data.")
+            return False
+        else:
+            print(f"Ticker {ticker} is valid and data is available.")
+            return True
+    except Exception as e:
+        # If there's an error fetching the data, return False
+        print(f"Error fetching data for {ticker}: {e}")
+        return False

@@ -1,7 +1,8 @@
 from fastapi import FastAPI
 from src.models.models import TradeRequest, TradeResponse
 from src.ml.model import simulate_trading
-from src.utils import create_plot
+from src.utils import create_plot, validate_ticker
+from fastapi import HTTPException
 
 import pandas as pd
 
@@ -28,8 +29,12 @@ async def trade(request: TradeRequest):
             - `plot_url`: A URL to a plot showing actual vs predicted stock prices for the simulated days (string, base64 encoded image).
             - `trade_log`: A detailed log of all buy and sell actions, including the date, price, and number of shares involved (List[Dict[str, Union[str, float]]]).
     """
-    final_balance, profit, data, trade_log = simulate_trading(
-        request.ticker, request.initial_balance, request.days
-    )
-    plot_url = create_plot(data, request.days)
-    return TradeResponse(final_balance=final_balance, profit=profit, plot_url=plot_url, trade_log=trade_log)
+    is_valid = validate_ticker(request.ticker)
+    if is_valid:
+        final_balance, profit, data, trade_log = simulate_trading(
+            request.ticker, request.initial_balance, request.days
+        )
+        plot_url = create_plot(data, request.days)
+        return TradeResponse(final_balance=final_balance, profit=profit, plot_url=plot_url, trade_log=trade_log)
+    else:
+        raise HTTPException(status_code=400, detail=f"{request.ticker} is not a valid ticker.")

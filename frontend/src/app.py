@@ -16,8 +16,8 @@ def fetch_trade_data(ticker, initial_balance, days):
         )
         response.raise_for_status()  # Check if the request was successful
         return response.json()  # Return the response in JSON format
-    except requests.exceptions.RequestException as e:
-        st.error(f"Error fetching trade data: {str(e)}")
+    except requests.exceptions.RequestException:
+        # Catch any error and show a general message to the user
         return None
 
 
@@ -46,49 +46,52 @@ with st.expander("See details of example stock tickers"):
 
 # Trigger trade simulation
 if st.button("Run Trade Simulation"):
-    trade_data = fetch_trade_data(ticker, initial_balance, days)
+    if ticker:
+        trade_data = fetch_trade_data(ticker, initial_balance, days)
 
-    if trade_data:
-        # Display the final balance and profit
-        st.write(f"Final Balance: ${trade_data['final_balance']:.2f}")
-        st.write(f"Profit: ${trade_data['profit']:.2f}")
-
-        # Display the plot (base64 encoded image)
-        plot_url = trade_data.get("plot_url")
-        if plot_url:
-            # Embed the image using base64 string
-            try:
-                plot_image = base64.b64decode(
-                    plot_url.split(",")[1]
-                )  # Decode the base64 string (remove data URL part)
-                st.image(
-                    plot_image,
-                    caption="Stock Price & Predicted Prices",
-                    use_container_width=True,
-                )
-            except Exception as e:
-                st.error(f"Error displaying image: {str(e)}")
-        else:
-            st.error("No plot data found.")
-
-        # Display the trade log
-        trade_log = trade_data.get("trade_log")
-        # Your trade log logic inside Streamlit
         if trade_data:
-            # Example trade log data (append format)
-            log_data = []
-            for trade in trade_data['trade_log']:
-                action = trade['action']
-                date = trade['date']
-                price = trade['price']  # This should be numeric, but it might come as a string
-                shares = trade['shares']
+            # Display the final balance and profit
+            st.write(f"Final Balance: ${trade_data['final_balance']:.2f}")
+            st.write(f"Profit: ${trade_data['profit']:.2f}")
 
-                # Convert price to float if necessary and format it correctly
-                log_data.append([action, date, f"${float(price):.2f}", shares])
+            # Display the plot (base64 encoded image)
+            plot_url = trade_data.get("plot_url")
+            if plot_url:
+                # Embed the image using base64 string
+                try:
+                    plot_image = base64.b64decode(
+                        plot_url.split(",")[1]
+                    )  # Decode the base64 string (remove data URL part)
+                    st.image(
+                        plot_image,
+                        caption="Stock Price & Predicted Prices",
+                        use_container_width=True,
+                    )
+                except Exception as e:
+                    st.error("Error displaying the plot image. Please try again later.")
+            else:
+                st.error("No plot data found.")
 
-            # Convert the log data into a DataFrame for better handling and to add column names
-            log_df = pd.DataFrame(log_data, columns=["Action", "Date", "Price", "Shares"])
+            # Display the trade log
+            trade_log = trade_data.get("trade_log")
+            if trade_log:
+                log_data = []
+                for trade in trade_log:
+                    action = trade['action']
+                    date = trade['date']
+                    price = trade['price']
+                    shares = trade['shares']
 
-            # Display the log with proper column names
-            st.write("Trade Log:")
-            st.table(log_df)  # Display the DataFrame as a table
+                    # Convert price to float if necessary and format it correctly
+                    log_data.append([action, date, f"${float(price):.2f}", shares])
+
+                # Convert the log data into a DataFrame for better handling and to add column names
+                log_df = pd.DataFrame(log_data, columns=["Action", "Date", "Price", "Shares"])
+
+                # Display the log with proper column names
+                st.write("Trade Log:")
+                st.table(log_df)  # Display the DataFrame as a table
+        else:
+            st.error("No trade data available. Please try again.")
+    else:
+        st.error("Please enter a valid ticker symbol.")
