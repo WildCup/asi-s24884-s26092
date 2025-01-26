@@ -63,17 +63,52 @@ def train_model(data):
     model = LinearRegression()
     model.fit(X_train, y_train)
     
-    model_filename = 'model/model.pkl'
-    os.makedirs('model', exist_ok=True) 
-    joblib.dump(model, model_filename)
-
     predictions = model.predict(X_test_sorted)
     
     mse = mean_squared_error(y_test_sorted, predictions)
     r2 = r2_score(y_test_sorted, predictions)
 
-    return model, X_test_sorted, y_test_sorted, predictions, model_filename
+    return model, X_test_sorted, y_test_sorted, predictions
 
+
+def load_or_train_model(data, ticker, model_dir="model"):
+    """
+    Loads a pre-trained model for a specific ticker if available, else trains a new model and saves it.
+
+    Args:
+        data (pd.DataFrame): Stock data including closing prices and moving averages.
+        ticker (str): Stock ticker symbol (e.g., "AAPL").
+        model_dir (str): Directory where the model is stored.
+
+    Returns:
+        model: Trained or loaded linear regression model.
+        X_test_sorted (pd.DataFrame): Sorted test set features.
+        y_test_sorted (pd.Series): Sorted test set target values.
+        predictions (np.ndarray): Predictions made by the model.
+    """
+    model_filename = os.path.join(model_dir, f"{ticker}_model.pkl")
+    
+    if os.path.exists(model_filename):
+        print(f"Loading pre-trained model for {ticker}...")
+        model = joblib.load(model_filename)
+        # Prepare test data (same as in the training process)
+        X = data[["Close", "MA_10", "MA_50"]]
+        y = data["Close"].shift(-1)
+        X = X[:-1]
+        y = y.dropna()
+        X_test, y_test = X[-len(y)//5:], y[-len(y)//5:]  # Assume last 20% is test data
+        X_test_sorted = X_test.sort_index()
+        y_test_sorted = y_test.loc[X_test_sorted.index]
+        predictions = model.predict(X_test_sorted)
+    else:
+        print(f"Training new model for {ticker}...")
+        # If no pre-trained model is found, train a new model
+        model, X_test_sorted, y_test_sorted, predictions = train_model(data)
+        # Save the trained model
+        os.makedirs(model_dir, exist_ok=True)
+        joblib.dump(model, model_filename)
+    
+    return model, X_test_sorted, y_test_sorted, predictions
 
 def simulate_trading(ticker, initial_balance, days=30):
     """
@@ -87,9 +122,11 @@ def simulate_trading(ticker, initial_balance, days=30):
     Returns:
         tuple: Final balance, profit, the updated stock data with predictions, and trade log.
     """
-    data = fetch_stock_data(ticker)  # Function to fetch stock data (make sure you have this implemented)
-    model, X_test, y_test, predictions, model_filename = train_model(data)
+    data = fetch_stock_data(ticker)  # Fetch stock data
 
+    # Load model (or train if needed)
+    model, X_test, y_test, predictions = load_or_train_model(data, ticker)
+    
     balance = initial_balance
     position = 0
     predicted_prices = []
