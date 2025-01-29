@@ -1,55 +1,32 @@
-- name: Deploy Application
-  hosts: myserver
+- name: Deploy Python Apps with Docker
+  hosts: all
   become: true
-  vars:
-    app_dir: /opt/myapp
-    docker_compose_file: docker-compose.yml
-
   tasks:
-    - name: Install required packages
-      apt:
-        name:
-          - docker.io
-          - docker-compose
+    - name: Install Docker and dependencies
+      ansible.builtin.apt:
+        name: [docker.io, docker-compose]
         state: present
-        update_cache: yes
+      when: ansible_os_family == "Debian"
 
-    - name: Create application directory
-      file:
-        path: "{{ app_dir }}"
-        state: directory
-        owner: "{{ ansible_user }}"
-        group: "{{ ansible_user }}"
-        mode: '0755'
-
-    - name: Copy application files to remote
-      copy:
-        src: "{{ item }}"
-        dest: "{{ app_dir }}/{{ item }}"
-      with_items:
-        - Dockerfile
-        - docker-compose.yml
-        - .env
-        - frontend/
-        - backend/
+    - name: Copy project files to the server
+      ansible.builtin.copy:
+        src: .
+        dest: /home/{{ ansible_user }}/app
+        mode: preserve
 
     - name: Build Docker images
-      command:
-        cmd: docker-compose -f "{{ app_dir }}/{{ docker_compose_file }}" build
+      ansible.builtin.shell:
+        cmd: docker-compose -f /home/{{ ansible_user }}/app/docker-compose.yml build
       args:
-        chdir: "{{ app_dir }}"
+        chdir: /home/{{ ansible_user }}/app
 
-    - name: Start application containers
-      command:
-        cmd: docker-compose -f "{{ app_dir }}/{{ docker_compose_file }}" up -d
+    - name: Start containers
+      ansible.builtin.shell:
+        cmd: docker-compose -f /home/{{ ansible_user }}/app/docker-compose.yml up -d
       args:
-        chdir: "{{ app_dir }}"
+        chdir: /home/{{ ansible_user }}/app
 
-    - name: Ensure application is running
-      command:
-        cmd: docker ps
-      register: docker_status
-
-    - name: Display running containers
-      debug:
-        var: docker_status.stdout_lines
+    - name: Configure application
+      ansible.builtin.command:
+        cmd: docker exec backend python manage.py migrate
+      ignore_errors: true
