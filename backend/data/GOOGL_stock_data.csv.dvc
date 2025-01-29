@@ -1,0 +1,5 @@
+outs:
+- md5: dd64b3bed39176a19ce47b72bf6476d3
+  size: 667682
+  hash: md5
+  path: GOOGL_stock_data.csv

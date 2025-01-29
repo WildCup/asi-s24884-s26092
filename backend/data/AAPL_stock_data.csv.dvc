@@ -1,0 +1,5 @@
+outs:
+- md5: 3b8d64ca4bdc7f3279c7e01ff7dd7329
+  size: 1496692
+  hash: md5
+  path: AAPL_stock_data.csv
