@@ -6,8 +6,9 @@ import pandas as pd
 from sklearn.linear_model import LinearRegression
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import mean_squared_error, r2_score
+import numpy.typing as npt
 
-def fetch_stock_data(ticker):
+def fetch_stock_data(ticker: str):
     """
     Fetches stock data from Yahoo Finance, calculates moving averages,
     and saves it to a CSV file if not already saved.
@@ -37,7 +38,7 @@ def fetch_stock_data(ticker):
 
     return data
 
-def train_model(data):
+def train_model(data: pd.DataFrame):
     """
     Trains a linear regression model on the stock data to predict the next day's closing price.
 
@@ -71,7 +72,7 @@ def train_model(data):
     return model, X_test_sorted, y_test_sorted, predictions
 
 
-def load_or_train_model(data, ticker, model_dir="model"):
+def load_or_train_model(data: pd.DataFrame, ticker: str, model_dir="model"):
     """
     Loads a pre-trained model for a specific ticker if available, else trains a new model and saves it.
 
@@ -110,7 +111,7 @@ def load_or_train_model(data, ticker, model_dir="model"):
     
     return model, X_test_sorted, y_test_sorted, predictions
 
-def simulate_trading(ticker, initial_balance, days=30):
+def simulate_trading(ticker: str, initial_balance: int, days=30):
     """
     Simulates a trading strategy using a linear regression model and stock predictions.
 
